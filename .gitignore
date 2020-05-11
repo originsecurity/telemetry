@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# History
+.history
+
+# VS Code
+.vscode
+
+# CDK Outputs
+src/cdk/cdk.out
