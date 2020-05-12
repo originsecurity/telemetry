@@ -1,23 +1,22 @@
-# Configuration
+# Configuration File Format
 
 1. [Service Types](service_types.md)
 1. Configuration File Format (HERE)
 1. [Getting Started Guide](getting_started.md)
 1. [Logstash How-to and Tips](logstash.md)
 
-
 All services are configured in `cdk.context.json`.
 
 This file contains:
 
 * Top level node called `shared` - where properties that are shared across stages are configured.
-* Top level node called `{stage_name}` (eg `nonprod`, `prod`) for each stage.
+* Top level node called `{stage_name}` (e.g. `nonprod`, `prod`) for each stage.
   * This is where stage-specific settings are set.
   * You *can* override settings that are already set in the `shared` node here.
 
 The `shared` and `{stage_name}` nodes for a given stage are _merged together_ when the cdk app is synthesised.
 
-**The CDK app will only systhesise templates for one stage at a time.** The stage is selected specified by appending `--context stage=stage_name` to the `cdk synth` command.
+**The CDK app will only systhesise templates for one stage at a time.** The stage is specified by appending `--context stage=stage_name` to the `cdk synth` command.
 
 Where settings exist in both `shared` and `{stage_name}`, the setting from stage-specific node will win. This lets you override any default settings specified under `shared`.
 
@@ -32,10 +31,10 @@ When merged, these nodes form a tree:
 | `├`  | `secrets_key_arn` |                       | [OPTIONAL] The ARN of the customer-managed KMS key that is for encrypting secrets. |
 | `├`  | `vpc_props`       |                       | This represents a dictionary whose settings are unpacked (`**`) directly into the vpc CDK constructor, referencing an _existing_ VPC and subnets. |
 | `├`  | `inbound`         |                       | All settings related to inbound services. |
-| `│`  | `├`               | `namespace_props`     | This represents a dictionary whose settings are unpacked (`**`) directly into the CloudMap CDK constructor, referencing an _existing_ CloudMap namespace. |
+| `│`  | `├`               | `namespace_props`     | This represents a dictionary whose settings are unpacked (`**`) directly into the Cloud Map CDK constructor, referencing an _existing_ Cloud Map namespace. |
 | `│`  | `└`               | `services`            | Fargate services are defined here. See **services nodes** description below. |
 | `├`  | `queue`           |                       | All settings related to Kinesis. |
-| `│`  | `├`               | `kinesis_endpoint`    | The VPC endpoint DNS name for connecting to Kinesis. |
+| `│`  | `├`               | `kinesis_endpoint`    | The VPC endpoint or public endpoint FQDN for connecting to Kinesis. |
 | `│`  | `└`               | `kinesis_shard_count` | Number of shards to provision for the Kinesis data stream. |
 | `└`  | `outbound`        |                       | All settings related to outbound services. |
 |      | `└`               | `services`            | Fargate services are defined here. See **services nodes** description below. |
@@ -49,8 +48,8 @@ The services structure is used in both inbound and outbound services:
 | `└`        | `{service_type}` | | | | The type of service: `nlb`, `cloudmap`, or `pull`. See [service types](service_types.md). |
 |            | `└`              | `{service_name}` | | | The name of the service.<br>**Must be unique within the service's own ECS cluster.** |
 |            |                  | `├`              | `desired_count` | | [OPTIONAL] The initial desired count setting for the service |
-|            |                  | `├`              | `ports` | | [OPTIONAL] The TCP ports to listen on. |
-|            |                  | `├`              | `udp_ports` | | [OPTIONAL] The UDP ports to listen on. |
+|            |                  | `├`              | `ports` | | [`cloudmap`, `nlb` only] The TCP ports to listen on. |
+|            |                  | `├`              | `udp_ports` | | [`cloudmap` only] The UDP ports to listen on. |
 |            |                  | `├`              | `size`          | | The size of the tasks within the service. |
 |            |                  | `│`              | `├`             | `cpu` | See [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html) for allowed values. |
 |            |                  | `│`              | `└`             | `ram` | See [AWS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html) for allowed values. |

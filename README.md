@@ -1,50 +1,39 @@
 # Origin Security - Telemetry Pipeline
 
-## Before you start
+Security organisations are continuously challenged to collect more logs, from more devices; a problem that is typically solved with a Security Information and Event Management (SIEM) platform.
 
-**A note on terminology:**
+Many traditional SIEMs try to solve all problems at once; at Origin, we decided to break the traditional model into discrete components, and use a combination of the best free and open source software and cloud services to run our SIEM smarter and cheaper, while avoiding vendor lock-in.
 
-* We call it our Security Telemetry pipeline, because it's a **pipeline** (unidirectional event flow) that security **telemetry** (metrics and logs) flows through.
-* Logstash also has a feature called [pipelines](https://www.elastic.co/guide/en/logstash/current/pipeline-to-pipeline.html). We use these in our docker image for pipeline to pipeline communication, so that our logstash config files are easier to manage.
-* Your CI/CD system will also have pipelines too.
+1. **Shipping and Parsing**:
+    * We use a combination of Elastic Beats and Logstash, with some​ cloud-native pipelines where they make sense, for things like CloudTrail or VPC flow logs.
+1. **Analytics**:
+    * We split off only the subset of logs we need for our day-to-day operations and alerting into Splunk.
+    * We use Amazon Athena to query our historical logs directly from archive, or any sources that aren't in Splunk.​
+1. **Archive**:
+    * We compress and partition our logs in Logstash before storing them in S3 for long term retention at very low cost.​
 
-Be aware that word pipeline is used if a few different contexts here.
+This repo consists of:
 
-**These stacks rely on some assumptions**, they assume that:
+* An AWS CDK app that will help with provisioning Fargate and the associated AWS components to run Logstash without servers.
+* Two docker images and associated Logstash configuration files to get you started.
 
-1. You already have a VPC and preferred subnets that you want to deploy Logstash to.
-1. Destination S3 bucket/s already exist for logstash to archive to.
-1. If you want to use AWS Cloud Map for DNS-based service discovery, that the Route 53 zone, and Cloud Map namespace already exist.
-1. If you need to inject secrets into your Logstash environment variables that these secrets are stored in Secrets Manager, and
-    * if you are using a _Customer Managed_ CMK to encrypt those secrets, that all secrets are encrypted with the same key.
+## Architecture
 
-## CloudFormation Stacks
-
-This app consists of five CloudFormation stacks, and two docker images:
-
-### 1. `{stage_name}-telemetry-logstash-in-ecr`
-
-This stack only provides the ECR repository to contain the `logstash-in` docker image.
-
-### 2. `{stage_name}-telemetry-logstash-in`
-
-This stack contains the Fargate cluster, services, load balancer, and other components to support receiving inbound events to the telemetry pipeline.
-
-### 3. `{stage_name}-telemetry-queue`
-
-This stack contains the Kinesis data stream that acts as our queue/buffer, and a DynamoDB table that Logstash uses for Kinesis consumer coordination.
-
-### 4. `{stage_name}-telemetry-logstash-out-ecr`
-
-This stack only provides the ECR repository to contain the `logstash-out` docker image.
-
-### 5. `{stage_name}-telemetry-logstash-out`
-
-This stack contains the Fargate cluster, service and associated components to support pulling events from Kinesis and sending them outbound to analytics (Splunk), and archive (S3).
-
-### Diagram
+1. We run a separate Logstash pipeline for each log source we’re ingesting, and we run them as separate microservices on Fargate.
+1. We push the events from these listener services into a central Kinesis data stream – which acts as a buffer.
+1. Then, we pull events from the data stream in batches and process them in a processor service, which is also Logstash running on Fargate.
+    * This service parses any unstructured events, typically from syslog sources, it partitions events by time and event attributes, and it compresses these partitioned batches before uploading them to S3.
+    * This service is also responsible for filtering off a subset of the event stream to a Splunk Universal Forwarder (**not included** in this stack).
 
 ![Image of diagram showing pipeline components and corresponding stacks.](/docs/images/pipeline_diagram.png)
+
+## Cost
+
+AWS pricing can vary significantly from region to region. You must review and understand the costs of the CloudFormation templates this stack outputs _before_ you deploy them.
+
+This will vary depending on how many services you deploy, what size and how many of each task you run, and which region you deploy to.
+
+**For general guidance only.** Origin Security's own telemetry pipeline implementation costs around USD $800/month to run in the Sydney region and manages around 400,000,000 events/day with regular peaks exceeding 10,000 events/second.
 
 ## Getting Started
 

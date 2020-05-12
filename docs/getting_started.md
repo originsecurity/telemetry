@@ -5,12 +5,37 @@
 1. Getting Started Guide (HERE)
 1. [Logstash How-to and Tips](logstash.md)
 
-
 Familiarise yourself with the available [service types](service_types.md) and [configuration file format](configuration.md) first.
 
 This getting started guide will help you deploy a basic logging pipeline, that listens for Elastic beats events, and archives those events to a pre-existing S3 bucket.
 
-## Synthesize CloudFormation templates
+## Expected Outputs
+
+This CDK app will produce five CloudFormation stacks, supported by two docker images:
+
+### 1. `{stage_name}-telemetry-logstash-in-ecr`
+
+This stack only provides the ECR repository to contain the `logstash-in` docker image.
+
+### 2. `{stage_name}-telemetry-logstash-in`
+
+This stack contains the Fargate cluster, services, load balancer, and other components to support receiving inbound events to the telemetry pipeline.
+
+### 3. `{stage_name}-telemetry-queue`
+
+This stack contains the Kinesis data stream that acts as our queue/buffer, and a DynamoDB table that Logstash uses for coordinating Kinesis consumers.
+
+### 4. `{stage_name}-telemetry-logstash-out-ecr`
+
+This stack only provides the ECR repository to contain the `logstash-out` docker image.
+
+### 5. `{stage_name}-telemetry-logstash-out`
+
+This stack contains the Fargate cluster, service and associated components to support pulling events from Kinesis and sending them outbound to analytics (e.g. Splunk or Elasticsearch), and archive (S3).
+
+## Instructions 
+
+### 1. Synthesize CloudFormation templates
 
 1. Make sure you've installed [Python 3](https://www.python.org/downloads/), [AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html), and [setup credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
     * We need these for converting the Python CDK code to native CloudFormation, and for uploading Logstash Docker images to ECR.
@@ -33,7 +58,7 @@ This getting started guide will help you deploy a basic logging pipeline, that l
     * Replace `stage_name` with the name of the stage, eg. `prod` or `nonprod`.
     * This needs to match an existing stage name in config file.
 
-## Deploy ECR Stacks and build Docker images
+### 2. Deploy ECR Stacks and build Docker images
 
 1. [Create](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html) the `src/cdk/cdk.out/{stage_name}-telemetry-logstash-in-ecr.template.json` CloudFormation stack in your account.
 1. When complete, click the `Resources` tab on the CloudFormation stack in the AWS console.
@@ -49,7 +74,7 @@ This getting started guide will help you deploy a basic logging pipeline, that l
     * **Stack:** `src/cdk/cdk.out/{stage_name}-telemetry-logstash-out-ecr.template.json`
     * **Image directory:** `src/docker/logstash-out`
 
-## Deploy Logging Pipeline Stacks
+### 3. Deploy Logging Pipeline Stacks
 
 1. **Kinesis / Queue:**
     * [Create](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html) the `src/cdk/cdk.out/{stage_name}-telemetry-logstash-queue.template.json` CloudFormation stack in your account.
