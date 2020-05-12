@@ -25,7 +25,7 @@ This repo consists of:
     * This service parses any unstructured events, typically from syslog sources, it partitions events by time and event attributes, and it compresses these partitioned batches before uploading them to S3.
     * This service is also responsible for filtering off a subset of the event stream to a Splunk Universal Forwarder (**not included** in this stack).
 
-![Image of diagram showing pipeline components and corresponding stacks.](/docs/images/pipeline_diagram.png)
+![Image of diagram showing pipeline components and corresponding stacks.](/docs/images/pipeline_diagram.png?raw=true)
 
 ## Cost
 
