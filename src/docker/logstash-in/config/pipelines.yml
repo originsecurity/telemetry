@@ -1,0 +1,12 @@
+- pipeline.id: logstash-ingress
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 4
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/${LOGSTASH_CONF}"
+- pipeline.id: healthcheck
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 1
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/05-healthcheck.conf"

@@ -1,0 +1,89 @@
+{
+    "@aws-cdk/core:enableStackNameDuplicates": "true",
+    "aws-cdk:enableDiffNoFail": "true",
+    "stage_name": {
+        "aws_region": "ap-southeast-2",
+        "account_id": "????????????",
+        "vpc_props": {
+            "vpc_id": "vpc-????????",
+            "availability_zones": [
+                "ap-southeast-2a",
+                "ap-southeast-2b",
+                "ap-southeast-2c"
+            ],
+            "private_subnet_ids": [
+                "subnet-????????",
+                "subnet-????????",
+                "subnet-????????"
+            ]
+        },
+        "debug_output": "false",
+        "ingress_cidr": "10.0.0.0/8",
+        "queue": {
+            "kinesis_endpoint": "kinesis.ap-southeast-2.amazonaws.com",
+            "kinesis_shard_count": 1
+        },
+        "outbound": {
+            "services": {
+                "pull": {
+                    "processor": {
+                        "variables": {
+                            "beats_log_bucket": "beats-bucket-name",
+                            "catchall_log_bucket": "catchall-bucket-name"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "shared": {
+        "inbound": {
+            "services": {
+                "nlb": {
+                    "beats": {
+                        "ports": [
+                            5044
+                        ],
+                        "size": {
+                            "cpu": 1024,
+                            "ram": 2048
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 900,
+                            "scale_out_cooldown_seconds": 300
+                        },
+                        "variables": {
+                            "logstash_conf": "30-beats.conf"
+                        }
+                    }
+                }
+            }
+        },
+        "outbound": {
+            "services": {
+                "pull": {
+                    "processor": {
+                        "size": {
+                            "cpu": 2048,
+                            "ram": 4096
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 300,
+                            "scale_out_cooldown_seconds": 900
+                        },
+                        "variables": {
+                            "s3_file_max_size": "2097152",
+                            "s3_file_max_time": "2"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

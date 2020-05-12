@@ -1,0 +1,249 @@
+{
+    "@aws-cdk/core:enableStackNameDuplicates": "true",
+    "aws-cdk:enableDiffNoFail": "true",
+    "nonprod": {
+        "aws_region": "ap-southeast-2",
+        "account_id": "????????????",
+        "vpc_props": {
+            "vpc_id": "vpc-????????",
+            "availability_zones": [
+                "ap-southeast-2a",
+                "ap-southeast-2b",
+                "ap-southeast-2c"
+            ],
+            "private_subnet_ids": [
+                "subnet-????????",
+                "subnet-????????",
+                "subnet-????????"
+            ]
+        },
+        "debug_output": "true",
+        "secrets_key_arn": "arn:aws:kms:ap-southeast-2:????????????:key/???????-????-????-????-????????????",
+        "inbound": {
+            "namespace_props": {
+                "namespace_id": "ns-????????????????",
+                "namespace_arn": "arn:aws:servicediscovery:ap-southeast-2:????????????:namespace/ns-????????????????",
+                "namespace_name": "services.nonprod.example.com"
+            },
+            "services": {
+                "pull": {
+                    "azure_event_hub": {
+                        "secrets": {
+                            "audit_logs": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/audit_logs",
+                            "sign_in_logs": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/sign_in_logs",
+                            "storage_connection": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/storage_connection"
+                        },
+                        "variables": {
+                            "audit_logs_state_container": "nonprod-insights-logs-auditlogs",
+                            "sign_in_logs_state_container": "nonprod-insights-logs-signinlogs"
+                        }
+                    }
+                }
+            }
+        },
+        "queue": {
+            "kinesis_endpoint": "vpce-?????????????????-????????.kinesis.ap-southeast-2.vpce.amazonaws.com",
+            "kinesis_shard_count": 1
+        },
+        "outbound": {
+            "services": {
+                "pull": {
+                    "processor": {
+                        "variables": {
+                            "beats_log_bucket": "beats1-bucket-name",
+                            "azuread_log_bucket": "azuread1-bucket-name",
+                            "catchall_log_bucket": "catchall1-bucket-name"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "prod": {
+        "aws_region": "ap-southeast-2",
+        "account_id": "????????????",
+        "vpc_props": {
+            "vpc_id": "vpc-????????",
+            "availability_zones": [
+                "ap-southeast-2a",
+                "ap-southeast-2b",
+                "ap-southeast-2c"
+            ],
+            "private_subnet_ids": [
+                "subnet-????????",
+                "subnet-????????",
+                "subnet-????????"
+            ]
+        },
+        "debug_output": "false",
+        "secrets_key_arn": "arn:aws:kms:ap-southeast-2:????????????:key/???????-????-????-????-????????????",
+        "inbound": {
+            "namespace_props": {
+                "namespace_id": "ns-????????????????",
+                "namespace_arn": "arn:aws:servicediscovery:ap-southeast-2:????????????:namespace/ns-????????????????",
+                "namespace_name": "services.prod.example.com"
+            },
+            "services": {
+                "nlb": {
+                    "syslog": {
+                        "scaling": {
+                            "min_capacity": 2,
+                            "max_capacity": 2
+                        }
+                    }
+                },
+                "pull": {
+                    "azure_event_hub": {
+                        "secrets": {
+                            "audit_logs": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/audit_logs",
+                            "sign_in_logs": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/sign_in_logs",
+                            "storage_connection": "arn:aws:secretsmanager:ap-southeast-2:????????????:secret:azure/event_hub/storage_connection"
+                        },
+                        "variables": {
+                            "audit_logs_state_container": "example2-insights-logs-auditlogs",
+                            "sign_in_logs_state_container": "example2-insights-logs-signinlogs"
+                        }
+                    }
+                }
+            }
+        },
+        "queue": {
+            "kinesis_endpoint": "vpce-??????????????????-????????.kinesis.ap-southeast-2.vpce.amazonaws.com",
+            "kinesis_shard_count": 4
+        },
+        "outbound": {
+            "services": {
+                "pull": {
+                    "processor": {
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 9
+                        },
+                        "variables": {
+                            "beats_log_bucket": "beats2-bucket-name",
+                            "azuread_log_bucket": "azuread2-bucket-name",
+                            "catchall_log_bucket": "catchall2-bucket-name"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "shared": {
+        "ingress_cidr": "10.0.0.0/8",
+        "inbound": {
+            "services": {
+                "nlb": {
+                    "syslog": {
+                        "ports": [
+                            5514,
+                            514
+                        ],
+                        "size": {
+                            "cpu": 2048,
+                            "ram": 4096
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 900,
+                            "scale_out_cooldown_seconds": 300
+                        },
+                        "variables": {
+                            "logstash_conf": "20-syslog.conf"
+                        }
+                        
+                    },
+                    "beats": {
+                        "ports": [
+                            5044
+                        ],
+                        "size": {
+                            "cpu": 1024,
+                            "ram": 2048
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 900,
+                            "scale_out_cooldown_seconds": 300
+                        },
+                        "variables": {
+                            "logstash_conf": "30-beats.conf"
+                        }
+                    }
+                },
+                "cloudmap": {
+                    "syslog_udp": {
+                        "ports": [
+                            5514,
+                            514
+                        ],
+                        "udp_ports": [
+                            5514,
+                            514
+                        ],
+                        "size": {
+                            "cpu": 1024,
+                            "ram": 2048
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 600,
+                            "scale_out_cooldown_seconds": 300
+                        },
+                        "variables": {
+                            "logstash_conf": "21-syslog_udp.conf"
+                        }
+                    }
+                },
+                "pull": {
+                    "azure_event_hub": {
+                        "size": {
+                            "cpu": 1024,
+                            "ram": 2048
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 1800,
+                            "scale_out_cooldown_seconds": 1800
+                        },
+                        "variables": {
+                            "logstash_conf": "40-azure_event_hubs.conf"
+                        }
+                    }
+                }
+            }
+        },
+        "outbound": {
+            "services": {
+                "pull": {
+                    "processor": {
+                        "desired_count": 1,
+                        "size": {
+                            "cpu": 2048,
+                            "ram": 4096
+                        },
+                        "scaling": {
+                            "min_capacity": 1,
+                            "max_capacity": 1,
+                            "target_utilization_percent": 70,
+                            "scale_in_cooldown_seconds": 300,
+                            "scale_out_cooldown_seconds": 900
+                        },
+                        "variables": {
+                            "s3_file_max_size": "2097152",
+                            "s3_file_max_time": "2"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

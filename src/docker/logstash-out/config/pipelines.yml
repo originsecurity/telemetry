@@ -1,0 +1,44 @@
+# ----------------------- Input Pipeline -----------------------
+- pipeline.id: parent
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 1
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/00-parent.conf"
+
+- pipeline.id: healthcheck
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 1
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/05-healthcheck.conf"
+
+# ----------------------- Output Pipelines below this point -----------------------
+- pipeline.id: beats
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 1
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/30-beats.conf"
+
+# - pipeline.id: syslog
+#   pipeline.batch.size: 125
+#   pipeline.batch.delay: 50
+#   pipeline.workers: 1
+#   queue.type: memory
+#   path.config: "/usr/share/logstash/pipeline/20-syslog.conf"
+
+# - pipeline.id: azure_event_hubs
+#   pipeline.batch.size: 125
+#   pipeline.batch.delay: 50
+#   pipeline.workers: 1
+#   queue.type: memory
+#   path.config: "/usr/share/logstash/pipeline/40-azure_event_hubs.conf"
+
+# ----------------------- Fallback Pipeline for events that don't have a type or are misconfigured -----------------------
+- pipeline.id: fallback
+  pipeline.batch.size: 125
+  pipeline.batch.delay: 50
+  pipeline.workers: 1
+  queue.type: memory
+  path.config: "/usr/share/logstash/pipeline/99-fallback.conf"
